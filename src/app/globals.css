@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    /* Technical Color Tokens - PT Asuka Engineering Indonesia */
+    --color-asuka-navy: #163d78;
+    --color-asuka-navy-hover: #123364;
+    --color-asuka-red: #ed2e35;
+    --color-asuka-red-hover: #cf2228;
+    
+    --color-bg-base: #0a0f1d;
+    --color-bg-surface: #0f172a;
+    --color-bg-panel: #1e293b;
+    --color-bg-element: #334155;
+    
+    --color-border-subtle: #1e293b;
+    --color-border-ui: #334155;
+    --color-border-strong: #475569;
+
+    --color-text-main: #f8fafc;
+    --color-text-muted: #94a3b8;
+    --color-text-dim: #64748b;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: var(--color-bg-base);
+    color: var(--color-text-main);
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Industrial Geometry Standards: Zero Pill Shapes */
+  button, input, select, textarea {
+    border-radius: 6px;
+  }
+
+  /* Tabular numbers across technical elements */
+  table, .tabular, code, pre, .font-mono, input[type="number"] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Custom Scrollbar for Industrial Technical Theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
