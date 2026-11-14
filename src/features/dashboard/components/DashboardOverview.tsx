@@ -21,9 +21,11 @@ export function DashboardOverview({
   calibrationSummary,
   onNavigateToTab,
 }: DashboardOverviewProps) {
-  const approvedDocs = documents.filter((d) => d.status === "APPROVED").length;
-  const pendingDocs = documents.filter((d) => d.status === "PENDING" || d.status === "SUBMITTED").length;
-  const rejectedDocs = documents.filter((d) => d.status === "REJECTED").length;
+  const approvedDocs = documents.filter((d) => (d.status || "").toUpperCase() === "APPROVED").length;
+  const pendingDocs = documents.filter((d) =>
+    ["PENDING", "SUBMITTED", "IN REVIEW", "IN_REVIEW"].includes((d.status || "").toUpperCase())
+  ).length;
+  const rejectedDocs = documents.filter((d) => (d.status || "").toUpperCase() === "REJECTED").length;
 
   return (
     <div className="space-y-6">
@@ -97,10 +99,10 @@ export function DashboardOverview({
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-semibold text-[#38bdf8]">
-                          {doc.documentNumber}
+                          {doc.documentCode || doc.documentNumber}
                         </span>
-                        <span className="text-[10px] font-mono text-slate-400">
-                          {doc.revision}
+                        <span className="text-[10px] font-mono text-slate-400 bg-[#1e293b] px-1.5 py-0.5 rounded-[2px]">
+                          Rev {doc.revision ?? 0}
                         </span>
                       </div>
                       <div className="text-xs font-medium text-slate-100">{doc.title}</div>
@@ -111,10 +113,14 @@ export function DashboardOverview({
 
                     <div className="text-right space-y-1">
                       <div>
-                        {doc.status === "APPROVED" && <Badge variant="approved">APPROVED</Badge>}
-                        {doc.status === "PENDING" && <Badge variant="pending">PENDING</Badge>}
-                        {doc.status === "SUBMITTED" && <Badge variant="submitted">SUBMITTED</Badge>}
-                        {doc.status === "REJECTED" && <Badge variant="rejected">REJECTED</Badge>}
+                        {(() => {
+                          const s = (doc.status || "").toUpperCase();
+                          if (s === "APPROVED") return <Badge variant="approved">APPROVED</Badge>;
+                          if (s === "PENDING" || s === "SUBMITTED" || s === "IN REVIEW")
+                            return <Badge variant="pending">PENDING</Badge>;
+                          if (s === "REJECTED") return <Badge variant="rejected">REJECTED</Badge>;
+                          return <Badge variant="neutral">{doc.status || "DRAFT"}</Badge>;
+                        })()}
                       </div>
                       <div className="text-[11px] font-mono text-slate-400">
                         {formatDate(doc.timestamp)}

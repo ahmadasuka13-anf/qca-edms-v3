@@ -43,24 +43,30 @@ export function DocumentListTable({
 
       const matchType = selectedType === "ALL" || doc.documentType === selectedType;
       const matchDiscipline = selectedDiscipline === "ALL" || doc.discipline === selectedDiscipline;
-      const matchStatus = selectedStatus === "ALL" || doc.status === selectedStatus;
+      const matchStatus =
+        selectedStatus === "ALL" ||
+        (doc.status || "").toUpperCase() === selectedStatus.toUpperCase();
 
       return matchSearch && matchType && matchDiscipline && matchStatus;
     });
   }, [documents, searchTerm, selectedType, selectedDiscipline, selectedStatus]);
 
   const renderStatusBadge = (status: string) => {
-    switch (status) {
+    const s = (status || "").toUpperCase();
+    switch (s) {
       case "APPROVED":
         return <Badge variant="approved">APPROVED</Badge>;
       case "PENDING":
         return <Badge variant="pending">PENDING</Badge>;
       case "SUBMITTED":
         return <Badge variant="submitted">SUBMITTED</Badge>;
+      case "IN REVIEW":
+      case "IN_REVIEW":
+        return <Badge variant="pending">IN REVIEW</Badge>;
       case "REJECTED":
         return <Badge variant="rejected">REJECTED</Badge>;
       default:
-        return <Badge variant="neutral">{status}</Badge>;
+        return <Badge variant="neutral">{status || "DRAFT"}</Badge>;
     }
   };
 
@@ -169,10 +175,10 @@ export function DocumentListTable({
                 </TableCell>
                 <TableCell>
                   <div className="font-mono font-semibold text-[#38bdf8] text-xs">
-                    {doc.documentNumber}
+                    {doc.documentCode || doc.documentNumber}
                   </div>
                   <div className="font-mono text-[11px] text-slate-400 mt-0.5">
-                    {doc.revision}
+                    Rev {doc.revision ?? 0}
                   </div>
                 </TableCell>
                 <TableCell>
