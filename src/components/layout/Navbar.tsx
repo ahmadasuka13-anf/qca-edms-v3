@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Search, LogOut, User as UserIcon } from "lucide-react";
+import { Search, LogOut, User as UserIcon, QrCode, Bot, Target } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { User } from "@/features/auth/types";
 
@@ -10,9 +10,19 @@ interface NavbarProps {
   user: User | null;
   onLogout: () => void;
   onGlobalSearch?: (query: string) => void;
+  selectedProject?: string;
+  onOpenQRScanner?: () => void;
+  onOpenAIChat?: () => void;
 }
 
-export function Navbar({ user, onLogout, onGlobalSearch }: NavbarProps) {
+export function Navbar({
+  user,
+  onLogout,
+  onGlobalSearch,
+  selectedProject,
+  onOpenQRScanner,
+  onOpenAIChat,
+}: NavbarProps) {
   const [timeStr, setTimeStr] = useState<string>("");
 
   useEffect(() => {
@@ -53,6 +63,12 @@ export function Navbar({ user, onLogout, onGlobalSearch }: NavbarProps) {
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-[2px] bg-[#163d78]/40 text-[#38bdf8] border border-[#163d78]">
               EDMS v3.0
             </span>
+            {selectedProject && (
+              <span className="hidden xl:inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.2 rounded-[2px] bg-[#16a34a]/20 text-[#4ade80] border border-[#16a34a]/40">
+                <Target className="w-2.5 h-2.5" />
+                <span>{selectedProject}</span>
+              </span>
+            )}
           </div>
           <p className="text-[10px] text-slate-400 font-mono tracking-tight">
             Quality Control & Quality Assurance EDMS System
@@ -73,10 +89,34 @@ export function Navbar({ user, onLogout, onGlobalSearch }: NavbarProps) {
         </div>
       </div>
 
-      {/* Status Indicators, Tabular Clock & User Profile */}
-      <div className="flex items-center gap-4">
+      {/* Quick Action Tools & Status Indicators */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Scan QR Button */}
+        {onOpenQRScanner && (
+          <button
+            onClick={onOpenQRScanner}
+            className="flex items-center gap-1.5 h-8 px-2.5 rounded-[6px] bg-[#1e293b] hover:bg-[#334155] text-slate-300 hover:text-white border border-[#334155] text-xs font-mono transition-colors"
+            title="Pindai QR / Verifikasi Dokumen"
+          >
+            <QrCode className="w-3.5 h-3.5 text-[#38bdf8]" />
+            <span className="hidden sm:inline">Scan QR</span>
+          </button>
+        )}
+
+        {/* Tanya AI QC Button */}
+        {onOpenAIChat && (
+          <button
+            onClick={onOpenAIChat}
+            className="flex items-center gap-1.5 h-8 px-2.5 rounded-[6px] bg-[#163d78]/30 hover:bg-[#163d78]/50 text-[#38bdf8] hover:text-white border border-[#163d78] text-xs font-mono font-semibold transition-colors"
+            title="Buka Tanya AI QC"
+          >
+            <Bot className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Tanya AI QC</span>
+          </button>
+        )}
+
         {/* Steady Connection Beacon */}
-        <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-slate-300">
+        <div className="hidden sm:flex items-center gap-1.5 text-xs font-mono text-slate-300 pl-2">
           <span className="w-2 h-2 rounded-[2px] bg-[#22c55e] inline-block" />
           <span className="text-[11px] text-slate-400">ONLINE</span>
         </div>

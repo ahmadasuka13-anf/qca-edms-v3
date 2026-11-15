@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Search, ExternalLink, Check, X, RefreshCw, Plus, Eye } from "lucide-react";
+import { Search, ExternalLink, Check, X, RefreshCw, Plus, Eye, Download } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -70,6 +70,44 @@ export function DocumentListTable({
     }
   };
 
+  const handleExportCSV = () => {
+    if (!documents.length) return;
+    const headers = [
+      "No",
+      "Kode Dokumen",
+      "Revisi",
+      "Judul Dokumen",
+      "Proyek",
+      "Tipe",
+      "Disiplin",
+      "Status",
+      "Pengunggah",
+      "Tanggal",
+    ];
+
+    const rows = filteredDocs.map((doc, idx) => [
+      idx + 1,
+      `"${doc.documentCode || doc.documentNumber}"`,
+      doc.revision ?? 0,
+      `"${doc.title.replace(/"/g, '""')}"`,
+      `"${(doc.projectName || "").replace(/"/g, '""')}"`,
+      doc.documentType,
+      doc.discipline,
+      doc.status,
+      `"${(doc.uploaderName || "").replace(/"/g, '""')}"`,
+      formatDate(doc.timestamp),
+    ]);
+
+    const csv = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Master_Dokumen_QAQC_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4">
       {/* Search & Filter Toolbar */}
@@ -123,6 +161,16 @@ export function DocumentListTable({
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+            icon={<Download className="w-4 h-4" strokeWidth={1.8} />}
+            title="Ekspor Seluruh Register ke Format CSV"
+          >
+            Ekspor CSV
+          </Button>
+
           <Button
             variant="secondary"
             size="sm"

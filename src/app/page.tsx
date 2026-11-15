@@ -44,6 +44,13 @@ import { ExecutiveAnalytics } from "@/features/analytics/components/ExecutiveAna
 import { DashboardOverview } from "@/features/dashboard/components/DashboardOverview";
 import { CommandCenterView } from "@/features/command-center";
 
+// Quality Operations (Approval, User Roles, Archive, AI & QR)
+import { ApprovalQueueView } from "@/features/approval/components/ApprovalQueueView";
+import { UserManagementView } from "@/features/users/components/UserManagementView";
+import { ArchiveRecycleBinView } from "@/features/archive/components/ArchiveRecycleBinView";
+import { AIAssistantModal } from "@/features/ai-assistant/components/AIAssistantModal";
+import { QRScannerModal } from "@/features/qr-scanner/components/QRScannerModal";
+
 // UI Components
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Database, Server } from "lucide-react";
@@ -98,6 +105,32 @@ export default function HomePage() {
   // Projects State
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [isProjectLoading, setIsProjectLoading] = useState(false);
+
+  // Global Project Filter & Modals
+  const [selectedProject, setSelectedProject] = useState<string>("");
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
+
+  // Filtered documents by project
+  const filteredDocuments = selectedProject
+    ? documents.filter((doc) => {
+        const pCode = (doc.projectCode || "").toUpperCase();
+        const pName = (doc.projectName || "").toUpperCase();
+        const target = selectedProject.toUpperCase();
+        return (
+          pCode === target ||
+          pName.includes(target) ||
+          (doc.documentCode && doc.documentCode.toUpperCase().includes(target))
+        );
+      })
+    : documents;
+
+  // Pending approval counter for badge
+  const pendingApprovalCount = documents.filter((d) =>
+    ["PENDING", "SUBMITTED", "IN REVIEW", "IN_REVIEW"].includes(
+      (d.status || "").toUpperCase()
+    )
+  ).length;
 
   // Loaders
   const loadDocuments = useCallback(async () => {
@@ -321,7 +354,13 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0f1d] flex flex-col text-slate-100">
-      <Navbar user={user} onLogout={logout} />
+      <Navbar
+        user={user}
+        onLogout={logout}
+        selectedProject={selectedProject}
+        onOpenQRScanner={() => setIsQRScannerOpen(true)}
+        onOpenAIChat={() => setIsAIChatOpen(true)}
+      />
 
       {/* Floating Toast */}
       {toastMessage && (
@@ -339,7 +378,22 @@ export default function HomePage() {
       )}
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        <Sidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          selectedProject={selectedProject}
+          onProjectChange={(projectCode) => {
+            setSelectedProject(projectCode);
+            if (projectCode) {
+              showToast(`Fokus proyek aktif: ${projectCode}`, "info");
+            } else {
+              showToast("Menampilkan seluruh proyek", "info");
+            }
+          }}
+          projects={projects.map((p) => ({ code: p.code, name: p.name }))}
+          pendingApprovalCount={pendingApprovalCount}
+          onOpenAIChat={() => setIsAIChatOpen(true)}
+        />
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {/* TAB 1: DASHBOARD OVERVIEW */}
@@ -354,7 +408,7 @@ export default function HomePage() {
                 </p>
               </div>
               <DashboardOverview
-                documents={documents}
+                documents={filteredDocuments}
                 calibrationSummary={calSummary}
                 onNavigateToTab={setActiveTab}
               />
@@ -365,6 +419,7 @@ export default function HomePage() {
           {activeTab === "command" && (
             <CommandCenterView
               onSelectProject={(projectCode) => {
+                setSelectedProject(projectCode);
                 setActiveTab("documents");
                 showToast(`Menampilkan dokumen untuk proyek ${projectCode}`, "info");
               }}
@@ -384,7 +439,7 @@ export default function HomePage() {
                 </p>
               </div>
               <DocumentListTable
-                documents={documents}
+                documents={filteredDocuments}
                 isLoading={isDocLoading}
                 onRefresh={loadDocuments}
                 onAddNew={() => setActiveTab("upload")}
@@ -424,6 +479,43 @@ export default function HomePage() {
                 transmittals={transmittals}
                 isLoading={isTransmittalLoading}
                 onRefresh={loadTransmittals}
+              />
+            </div>
+          )}
+
+          {/* TAB 4B: APPROVAL & TUGAS SAYA */}
+          {activeTab === "approval" && (
+            <div className="space-y-6">
+              <div className="border-b border-[#1e293b] pb-4">
+                <h1 className="text-lg font-bold tracking-wide text-slate-100 uppercase">
+                  Approval Queue & Verifikasi Dokumen
+                </h1>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">
+                  Antrean persetujuan dokumen ITP, Method Statement & Material Approval oleh QA/QC Manager
+                </p>
+              </div>
+              <ApprovalQueueView
+                documents={documents}
+                onApprove={async (docId, comments) => {
+                  try {
+                    const res = await documentService.approveDocument(docId, comments);
+                    showToast(res.message, res.success ? "success" : "error");
+                    await loadDocuments();
+                  } catch (e) {
+                    showToast((e as Error).message, "error");
+                  }
+                }}
+                onReject={async (docId, comments) => {
+                  try {
+                    const res = await documentService.rejectDocument(docId, comments);
+                    showToast(res.message, res.success ? "success" : "error");
+                    await loadDocuments();
+                  } catch (e) {
+                    showToast((e as Error).message, "error");
+                  }
+                }}
+                onRefresh={loadDocuments}
+                isLoading={isDocLoading}
               />
             </div>
           )}
@@ -529,6 +621,41 @@ export default function HomePage() {
             </div>
           )}
 
+          {/* TAB 9B: MANAJEMEN PENGGUNA */}
+          {activeTab === "users" && (
+            <div className="space-y-6">
+              <div className="border-b border-[#1e293b] pb-4">
+                <h1 className="text-lg font-bold tracking-wide text-slate-100 uppercase">
+                  Manajemen Pengguna & Hak Akses QA/QC
+                </h1>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">
+                  Direktori personel kontrol mutu, verifikator dokumen & penetapan peran (RBAC)
+                </p>
+              </div>
+              <UserManagementView />
+            </div>
+          )}
+
+          {/* TAB 9C: ARSIP MUTU & RECYCLE BIN */}
+          {activeTab === "archive" && (
+            <div className="space-y-6">
+              <div className="border-b border-[#1e293b] pb-4">
+                <h1 className="text-lg font-bold tracking-wide text-slate-100 uppercase">
+                  Arsip Mutu & Tempat Sampah Dokumen
+                </h1>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">
+                  Dokumen berstatus Superseded, revisi lama, dan riwayat pemulihan berkas kontrol
+                </p>
+              </div>
+              <ArchiveRecycleBinView
+                documents={documents}
+                onRestore={(docId) => {
+                  showToast(`Dokumen ${docId} berhasil dipulihkan.`, "success");
+                }}
+              />
+            </div>
+          )}
+
           {/* TAB 10: PENGATURAN SISTEM */}
           {activeTab === "settings" && (
             <div className="space-y-6">
@@ -600,6 +727,24 @@ export default function HomePage() {
         isOpen={isSiteReportModalOpen}
         onClose={() => setIsSiteReportModalOpen(false)}
         onSubmit={handleSaveSiteReport}
+      />
+
+      {/* AI Assistant Modal */}
+      <AIAssistantModal
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
+        activeProjectCode={selectedProject}
+      />
+
+      {/* QR & Barcode Scanner Modal */}
+      <QRScannerModal
+        isOpen={isQRScannerOpen}
+        onClose={() => setIsQRScannerOpen(false)}
+        documents={documents}
+        onOpenDocument={(doc) => {
+          setIsQRScannerOpen(false);
+          setSelectedDocForDetail(doc);
+        }}
       />
     </div>
   );
