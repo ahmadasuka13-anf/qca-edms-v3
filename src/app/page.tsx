@@ -123,15 +123,15 @@ export default function HomePage() {
   // Filtered documents by project
   const filteredDocuments = selectedProject
     ? documents.filter((doc) => {
-        const pCode = (doc.projectCode || "").toUpperCase();
-        const pName = (doc.projectName || "").toUpperCase();
-        const target = selectedProject.toUpperCase();
-        return (
-          pCode === target ||
-          pName.includes(target) ||
-          (doc.documentCode && doc.documentCode.toUpperCase().includes(target))
-        );
-      })
+      const pCode = (doc.projectCode || "").toUpperCase();
+      const pName = (doc.projectName || "").toUpperCase();
+      const target = selectedProject.toUpperCase();
+      return (
+        pCode === target ||
+        pName.includes(target) ||
+        (doc.documentCode && doc.documentCode.toUpperCase().includes(target))
+      );
+    })
     : documents;
 
   // Pending approval counter for badge
@@ -374,13 +374,12 @@ export default function HomePage() {
       {/* Floating Toast */}
       {toastMessage && (
         <div
-          className={`fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-[4px] border text-xs font-mono shadow-2xl transition-all ${
-            toastMessage.type === "success"
+          className={`fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-[4px] border text-xs font-mono shadow-2xl transition-all ${toastMessage.type === "success"
               ? "bg-[#052e16] text-[#4ade80] border-[#166534]"
               : toastMessage.type === "info"
-              ? "bg-[#0b1f3a] text-[#60a5fa] border-[#1e40af]"
-              : "bg-[#450a0a] text-[#f87171] border-[#991b1b]"
-          }`}
+                ? "bg-[#0b1f3a] text-[#60a5fa] border-[#1e40af]"
+                : "bg-[#450a0a] text-[#f87171] border-[#991b1b]"
+            }`}
         >
           {toastMessage.text}
         </div>
