@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 
 export function Table({ className, children, ...props }: React.TableHTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="w-full overflow-x-auto border border-[#1e293b] rounded-[6px]">
-      <table className={cn("w-full text-left text-xs text-slate-200 tabular-nums border-collapse", className)} {...props}>
+    <div className="w-full overflow-x-auto border border-slate-200 rounded-[6px] bg-white">
+      <table className={cn("w-full text-left text-xs text-slate-800 tabular-nums border-collapse", className)} {...props}>
         {children}
       </table>
     </div>
@@ -13,7 +13,7 @@ export function Table({ className, children, ...props }: React.TableHTMLAttribut
 
 export function TableHeader({ className, children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <thead className={cn("bg-[#1e293b] text-slate-400 font-mono uppercase text-[11px] tracking-wider border-b border-[#334155]", className)} {...props}>
+    <thead className={cn("bg-slate-100 text-slate-700 font-mono uppercase text-[11px] tracking-wider border-b border-slate-200", className)} {...props}>
       {children}
     </thead>
   );
@@ -21,7 +21,7 @@ export function TableHeader({ className, children, ...props }: React.HTMLAttribu
 
 export function TableBody({ className, children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <tbody className={cn("divide-y divide-[#1e293b] bg-[#0f172a]", className)} {...props}>
+    <tbody className={cn("divide-y divide-slate-100 bg-white", className)} {...props}>
       {children}
     </tbody>
   );
@@ -29,7 +29,7 @@ export function TableBody({ className, children, ...props }: React.HTMLAttribute
 
 export function TableRow({ className, children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr className={cn("hover:bg-[#1e293b]/50 transition-colors", className)} {...props}>
+    <tr className={cn("hover:bg-slate-50 transition-colors", className)} {...props}>
       {children}
     </tr>
   );

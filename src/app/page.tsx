@@ -63,7 +63,7 @@ import { Database, Server } from "lucide-react";
 
 export default function HomePage() {
   const { user, isAuthenticated, isLoading: authLoading, logout, refreshUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<NavTab>("dashboard");
+  const [activeTab, setActiveTab] = useState<NavTab>("documents");
 
   // Notification Toast
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
@@ -436,29 +436,20 @@ export default function HomePage() {
             />
           )}
 
-          {/* TAB 2: DAFTAR DOKUMEN */}
+          {/* TAB 2: DAFTAR DOKUMEN (CMS LAYOUT) */}
           {activeTab === "documents" && (
-            <div className="space-y-6">
-              <div className="border-b border-[#1e293b] pb-4">
-                <h1 className="text-lg font-bold tracking-wide text-slate-100 uppercase">
-                  Daftar Dokumen Kontrol EDMS
-                </h1>
-                <p className="text-xs text-slate-400 font-mono mt-0.5">
-                  Master register ITP, Method Statement, Material Approval & NCR
-                </p>
-              </div>
-              <DocumentListTable
-                documents={filteredDocuments}
-                isLoading={isDocLoading}
-                onRefresh={loadDocuments}
-                onAddNew={() => setActiveTab("upload")}
-                onViewDetail={(doc) => setSelectedDocForDetail(doc)}
-                onPreviewDoc={(doc) => setPreviewDoc(doc)}
-                onHistoryDoc={(doc) => setHistoryDoc(doc)}
-                onApprove={handleApproveDoc}
-                onReject={handleRejectDoc}
-              />
-            </div>
+            <DocumentListTable
+              documents={filteredDocuments}
+              isLoading={isDocLoading}
+              onRefresh={loadDocuments}
+              onAddNew={() => setActiveTab("upload")}
+              onViewDetail={(doc) => setSelectedDocForDetail(doc)}
+              onPreviewDoc={(doc) => setPreviewDoc(doc)}
+              onHistoryDoc={(doc) => setHistoryDoc(doc)}
+              onApprove={handleApproveDoc}
+              onReject={handleRejectDoc}
+              onOpenQRScanner={() => setIsQRScannerOpen(true)}
+            />
           )}
 
           {/* TAB 3: UNGGAH DOKUMEN */}

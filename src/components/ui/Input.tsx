@@ -25,7 +25,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={type}
             ref={ref}
             className={cn(
-              "w-full bg-[#1e293b] text-slate-100 placeholder-slate-500 border border-[#334155] rounded-[6px] text-sm focus:outline-none focus:border-[#163d78] focus:ring-1 focus:ring-[#163d78] h-9 px-3 transition-colors",
+              "w-full bg-white text-slate-900 placeholder-slate-400 border border-slate-300 rounded-[6px] text-sm focus:outline-none focus:border-[#163d78] focus:ring-1 focus:ring-[#163d78] h-9 px-3 transition-colors",
               icon && "pl-9",
               error && "border-[#ed2e35] focus:border-[#ed2e35] focus:ring-[#ed2e35]",
               type === "number" && "tabular-nums",

@@ -1,10 +1,23 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Search, ExternalLink, Check, X, RefreshCw, Plus, Eye, Download, History, FileText } from "lucide-react";
+import {
+  Search,
+  ExternalLink,
+  Check,
+  X,
+  RefreshCw,
+  Eye,
+  History,
+  FileText,
+  QrCode,
+  FileSpreadsheet,
+  UploadCloud,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/Table";
 import { DocumentItem } from "../types";
 import { formatDate } from "@/lib/utils";
@@ -19,6 +32,7 @@ interface DocumentListTableProps {
   onHistoryDoc?: (doc: DocumentItem) => void;
   onApprove?: (docId: string) => void;
   onReject?: (docId: string) => void;
+  onOpenQRScanner?: () => void;
 }
 
 export function DocumentListTable({
@@ -31,6 +45,7 @@ export function DocumentListTable({
   onHistoryDoc,
   onApprove,
   onReject,
+  onOpenQRScanner,
 }: DocumentListTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<string>("ALL");
@@ -54,6 +69,73 @@ export function DocumentListTable({
       return matchSearch && matchType && matchDiscipline && matchStatus;
     });
   }, [documents, searchTerm, selectedType, selectedDiscipline, selectedStatus]);
+
+  // Donut chart status breakdown (Matching CMS Screenshot)
+  const statusCounts = useMemo(() => {
+    let pending = 0;
+    let approved = 0;
+    let rejected = 0;
+    let superseded = 0;
+
+    documents.forEach((d) => {
+      const s = (d.status || "").toUpperCase();
+      if (s === "APPROVED") approved++;
+      else if (s === "PENDING" || s === "SUBMITTED" || s === "IN REVIEW" || s === "IN_REVIEW") pending++;
+      else if (s === "REJECTED") rejected++;
+      else if (s === "SUPERSEDED" || s === "OBSOLETE") superseded++;
+      else pending++;
+    });
+
+    return {
+      Pending: pending,
+      Approved: approved,
+      Rejected: rejected,
+      Superseded: superseded,
+    };
+  }, [documents]);
+
+  const totalDocs = documents.length;
+
+  const donutElements = useMemo(() => {
+    if (totalDocs === 0) return null;
+    const size = 160;
+    const r = 56;
+    const sw = 22;
+    const cx = size / 2;
+    const cy = size / 2;
+    const cir = 2 * Math.PI * r;
+
+    const items = [
+      { key: "Pending", count: statusCounts.Pending, color: "#f59e0b" },
+      { key: "Approved", count: statusCounts.Approved, color: "#16a34a" },
+      { key: "Rejected", count: statusCounts.Rejected, color: "#dc2626" },
+      { key: "Superseded", count: statusCounts.Superseded, color: "#64748b" },
+    ].filter((it) => it.count > 0);
+
+    let cum = 0;
+    const circles = items.map((it) => {
+      const frac = it.count / totalDocs;
+      const dash = frac * cir;
+      const gap = cir - dash;
+      const offset = -cum;
+      cum += dash;
+      return (
+        <circle
+          key={it.key}
+          cx={cx}
+          cy={cy}
+          r={r}
+          fill="none"
+          stroke={it.color}
+          strokeWidth={sw}
+          strokeDasharray={`${dash} ${gap}`}
+          strokeDashoffset={offset}
+        />
+      );
+    });
+
+    return { size, cx, cy, circles, items };
+  }, [totalDocs, statusCounts]);
 
   const renderStatusBadge = (status: string) => {
     const s = (status || "").toUpperCase();
@@ -113,90 +195,179 @@ export function DocumentListTable({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Search & Filter Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-[#0f172a] p-3.5 border border-[#1e293b] rounded-[6px]">
-        <div className="flex flex-wrap items-center gap-2.5 flex-1">
-          <div className="w-full sm:w-72">
-            <Input
-              placeholder="Cari nomor dokumen / judul / project..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              icon={<Search className="w-4 h-4" strokeWidth={1.8} />}
-            />
-          </div>
-
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="h-9 bg-[#1e293b] text-slate-200 border border-[#334155] rounded-[6px] px-3 text-xs focus:outline-none focus:border-[#163d78]"
-          >
-            <option value="ALL">SEMUA TIPE DOKUMEN</option>
-            <option value="ITP">ITP (INSPECTION & TEST PLAN)</option>
-            <option value="METHOD_STATEMENT">METHOD STATEMENT</option>
-            <option value="MATERIAL_APPROVAL">MATERIAL APPROVAL (MTR)</option>
-            <option value="NCR">NON-CONFORMANCE REPORT (NCR)</option>
-            <option value="RFI">REQUEST FOR INSPECTION (RFI)</option>
-          </select>
-
-          <select
-            value={selectedDiscipline}
-            onChange={(e) => setSelectedDiscipline(e.target.value)}
-            className="h-9 bg-[#1e293b] text-slate-200 border border-[#334155] rounded-[6px] px-3 text-xs focus:outline-none focus:border-[#163d78]"
-          >
-            <option value="ALL">SEMUA DISIPLIN</option>
-            <option value="CIVIL">CIVIL</option>
-            <option value="MECHANICAL">MECHANICAL</option>
-            <option value="ELECTRICAL">ELECTRICAL</option>
-            <option value="INSTRUMENT">INSTRUMENT</option>
-          </select>
-
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="h-9 bg-[#1e293b] text-slate-200 border border-[#334155] rounded-[6px] px-3 text-xs focus:outline-none focus:border-[#163d78]"
-          >
-            <option value="ALL">SEMUA STATUS</option>
-            <option value="APPROVED">APPROVED</option>
-            <option value="PENDING">PENDING</option>
-            <option value="SUBMITTED">SUBMITTED</option>
-            <option value="REJECTED">REJECTED</option>
-          </select>
+    <div className="bg-white border border-slate-200/80 rounded-xl shadow-sm p-6 space-y-5">
+      {/* Top Banner Row matching CMS Screenshot */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">
+            Daftar Dokumen Mutu
+          </h1>
+          <p className="text-xs text-slate-500 font-mono mt-0.5">
+            Semua dokumen proyek yang terdaftar dan riwayat approval.
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportCSV}
-            icon={<Download className="w-4 h-4" strokeWidth={1.8} />}
-            title="Ekspor Seluruh Register ke Format CSV"
+        {onAddNew && (
+          <button
+            onClick={onAddNew}
+            className="flex items-center gap-2.5 px-6 py-3 rounded-[8px] bg-[#ed2e35] hover:bg-[#c92026] text-white font-bold text-sm tracking-wide shadow-md shadow-[#ed2e35]/20 transition-all self-start sm:self-auto cursor-pointer"
           >
-            Ekspor CSV
-          </Button>
+            <UploadCloud className="w-5 h-5" strokeWidth={2} />
+            <span>Unggah Dokumen Baru</span>
+          </button>
+        )}
+      </div>
 
+      {/* Filter Row 1 (Search, Scan, Types, Status, Muat Ulang) */}
+      <div className="flex flex-wrap items-center gap-2.5 bg-slate-50/70 p-3 border border-slate-200 rounded-[8px]">
+        <div className="flex-1 min-w-[200px]">
+          <Input
+            placeholder="Cari nama file, proyek, atau jud..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            icon={<Search className="w-4 h-4 text-slate-400" strokeWidth={1.8} />}
+            className="bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:bg-white"
+          />
+        </div>
+
+        {onOpenQRScanner && (
           <Button
             variant="secondary"
             size="sm"
-            onClick={onRefresh}
-            isLoading={isLoading}
-            icon={<RefreshCw className="w-4 h-4" strokeWidth={1.8} />}
+            onClick={onOpenQRScanner}
+            icon={<QrCode className="w-4 h-4 text-slate-500" strokeWidth={1.8} />}
+            className="bg-white hover:bg-slate-50 text-slate-700 border-slate-300"
           >
-            Refresh
+            Scan
           </Button>
+        )}
 
-          {onAddNew && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={onAddNew}
-              icon={<Plus className="w-4 h-4" strokeWidth={1.8} />}
-            >
-              Unggah Dokumen
-            </Button>
-          )}
-        </div>
+        <select
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value)}
+          className="h-9 bg-white text-slate-700 border border-slate-300 rounded-[6px] px-3 text-xs focus:outline-none focus:border-[#163d78]"
+        >
+          <option value="ALL">Semua Jenis</option>
+          <option value="ITP">ITP (Inspection & Test Plan)</option>
+          <option value="MS">Method Statement (MS)</option>
+          <option value="MTR">Material Approval (MTR)</option>
+          <option value="NCR">Non-Conformance Report (NCR)</option>
+        </select>
+
+        <select
+          value={selectedDiscipline}
+          onChange={(e) => setSelectedDiscipline(e.target.value)}
+          className="h-9 bg-white text-slate-700 border border-slate-300 rounded-[6px] px-3 text-xs focus:outline-none focus:border-[#163d78]"
+        >
+          <option value="ALL">Semua Disiplin</option>
+          <option value="CIVIL">Civil & Architectural</option>
+          <option value="MECHANICAL">Mechanical & Piping</option>
+          <option value="ELECTRICAL">Electrical & Instrument</option>
+        </select>
+
+        <select
+          value={selectedStatus}
+          onChange={(e) => setSelectedStatus(e.target.value)}
+          className="h-9 bg-white text-slate-700 border border-slate-300 rounded-[6px] px-3 text-xs focus:outline-none focus:border-[#163d78]"
+        >
+          <option value="ALL">Semua Status</option>
+          <option value="PENDING">Pending</option>
+          <option value="APPROVED">Approved</option>
+          <option value="REJECTED">Rejected</option>
+          <option value="SUPERSEDED">Superseded</option>
+        </select>
+
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={onRefresh}
+          isLoading={isLoading}
+          icon={<RefreshCw className="w-4 h-4 text-slate-500" strokeWidth={1.8} />}
+          className="bg-white hover:bg-slate-50 text-slate-700 border-slate-300"
+        >
+          Muat Ulang
+        </Button>
       </div>
+
+      {/* Filter Row 2 (Ekspor Excel, Laporan Harian, Laporan Mingguan) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleExportCSV}
+          icon={<FileSpreadsheet className="w-4 h-4 text-[#16a34a]" strokeWidth={1.8} />}
+          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200"
+        >
+          Ekspor Excel
+        </Button>
+
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleExportCSV}
+          icon={<FileText className="w-4 h-4 text-slate-500" strokeWidth={1.8} />}
+          className="bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+        >
+          Laporan Harian
+        </Button>
+
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleExportCSV}
+          icon={<FileText className="w-4 h-4 text-slate-500" strokeWidth={1.8} />}
+          className="bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+        >
+          Laporan Mingguan
+        </Button>
+      </div>
+
+      {/* Donut Chart Summary Card (Matching CMS Screenshot) */}
+      {donutElements && (
+        <Card className="p-5 border-slate-200 bg-slate-50/50">
+          <div className="flex flex-col sm:flex-row items-center gap-8">
+            {/* SVG Donut */}
+            <div className="relative flex items-center justify-center flex-shrink-0">
+              <svg
+                viewBox={`0 0 ${donutElements.size} ${donutElements.size}`}
+                width={donutElements.size}
+                height={donutElements.size}
+                className="transform -rotate-90"
+              >
+                {donutElements.circles}
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-2xl font-bold font-mono text-slate-900 tabular-nums">
+                  {totalDocs}
+                </span>
+                <span className="text-[10px] font-mono font-bold tracking-wider text-slate-500">
+                  DOKUMEN
+                </span>
+              </div>
+            </div>
+
+            {/* Donut Legend */}
+            <div className="space-y-2.5 flex-1 w-full font-mono text-xs">
+              {donutElements.items.map((it) => {
+                const pct = Math.round((it.count / totalDocs) * 100);
+                return (
+                  <div key={it.key} className="flex items-center gap-3">
+                    <span
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: it.color }}
+                    />
+                    <span className="text-slate-700 w-24">{it.key}</span>
+                    <span className="font-bold text-slate-900 tabular-nums w-8">
+                      {it.count}
+                    </span>
+                    <span className="text-slate-500 tabular-nums">({pct}%)</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Technical Engineering Document Table */}
       <Table>
@@ -226,41 +397,41 @@ export function DocumentListTable({
                   {idx + 1}
                 </TableCell>
                 <TableCell>
-                  <div className="font-mono font-semibold text-[#38bdf8] text-xs">
+                  <div className="font-mono font-semibold text-[#163d78] text-xs">
                     {doc.documentCode || doc.documentNumber}
                   </div>
                   {onHistoryDoc ? (
                     <button
                       onClick={() => onHistoryDoc(doc)}
-                      className="font-mono text-[11px] text-slate-400 hover:text-[#38bdf8] transition-colors mt-0.5 flex items-center gap-1 group"
+                      className="font-mono text-[11px] text-slate-500 hover:text-[#163d78] transition-colors mt-0.5 flex items-center gap-1 group"
                       title="Lihat Riwayat & Rollback Revisi"
                     >
-                      <History className="w-3 h-3 text-slate-500 group-hover:text-[#38bdf8]" />
+                      <History className="w-3 h-3 text-slate-400 group-hover:text-[#163d78]" />
                       <span>Rev {doc.revision ?? 0}</span>
                     </button>
                   ) : (
-                    <div className="font-mono text-[11px] text-slate-400 mt-0.5">
+                    <div className="font-mono text-[11px] text-slate-500 mt-0.5">
                       Rev {doc.revision ?? 0}
                     </div>
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="font-medium text-slate-100 text-xs">{doc.title}</div>
-                  <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                  <div className="font-medium text-slate-900 text-xs">{doc.title}</div>
+                  <div className="text-[11px] text-slate-500 font-mono mt-0.5">
                     {doc.projectName}
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-xs text-slate-200 font-medium">{doc.documentType}</div>
-                  <div className="text-[11px] text-slate-400 font-mono">{doc.discipline}</div>
+                  <div className="text-xs text-slate-800 font-medium">{doc.documentType}</div>
+                  <div className="text-[11px] text-slate-500 font-mono">{doc.discipline}</div>
                 </TableCell>
-                <TableCell className="text-center font-mono text-xs text-slate-300">
+                <TableCell className="text-center font-mono text-xs text-slate-600">
                   {formatDate(doc.timestamp)}
                 </TableCell>
                 <TableCell className="text-center">
                   {renderStatusBadge(doc.status)}
                 </TableCell>
-                <TableCell className="text-xs text-slate-300">
+                <TableCell className="text-xs text-slate-700">
                   {doc.uploaderName}
                 </TableCell>
                 <TableCell className="text-center">
@@ -268,7 +439,7 @@ export function DocumentListTable({
                     {onPreviewDoc && doc.fileUrl && (
                       <button
                         onClick={() => onPreviewDoc(doc)}
-                        className="p-1.5 rounded-[4px] bg-[#163d78]/30 hover:bg-[#163d78]/70 text-[#38bdf8] border border-[#163d78] transition-colors"
+                        className="p-1.5 rounded-[4px] bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 transition-colors"
                         title="Pratinjau Dokumen (In-App)"
                       >
                         <FileText className="w-3.5 h-3.5" strokeWidth={1.8} />
@@ -277,7 +448,7 @@ export function DocumentListTable({
                     {onViewDetail && (
                       <button
                         onClick={() => onViewDetail(doc)}
-                        className="p-1.5 rounded-[4px] bg-[#1e293b] hover:bg-[#334155] text-slate-300 hover:text-white border border-[#334155] transition-colors"
+                        className="p-1.5 rounded-[4px] bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-colors"
                         title="Lihat Detail Dokumen"
                       >
                         <Eye className="w-3.5 h-3.5" strokeWidth={1.8} />
@@ -288,7 +459,7 @@ export function DocumentListTable({
                         href={doc.fileUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-1.5 rounded-[4px] hover:bg-[#334155] text-slate-300 hover:text-white transition-colors"
+                        className="p-1.5 rounded-[4px] hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors"
                         title="Buka File di Drive"
                       >
                         <ExternalLink className="w-3.5 h-3.5" strokeWidth={1.8} />
@@ -297,7 +468,7 @@ export function DocumentListTable({
                     {doc.status === "PENDING" && onApprove && (
                       <button
                         onClick={() => onApprove(doc.docId)}
-                        className="p-1.5 rounded-[4px] bg-[#052e16] hover:bg-[#166534] text-[#4ade80] border border-[#166534] transition-colors"
+                        className="p-1.5 rounded-[4px] bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 transition-colors"
                         title="Setujui Dokumen"
                       >
                         <Check className="w-3.5 h-3.5" strokeWidth={2} />
@@ -306,7 +477,7 @@ export function DocumentListTable({
                     {doc.status === "PENDING" && onReject && (
                       <button
                         onClick={() => onReject(doc.docId)}
-                        className="p-1.5 rounded-[4px] bg-[#450a0a] hover:bg-[#991b1b] text-[#f87171] border border-[#991b1b] transition-colors"
+                        className="p-1.5 rounded-[4px] bg-red-50 hover:bg-red-100 text-red-700 border border-red-300 transition-colors"
                         title="Tolak Dokumen"
                       >
                         <X className="w-3.5 h-3.5" strokeWidth={2} />

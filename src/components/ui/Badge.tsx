@@ -22,14 +22,14 @@ export function Badge({ className, variant = "neutral", children, ...props }: Ba
     "inline-flex items-center px-2 py-0.5 text-xs font-mono font-medium rounded-[3px] border tracking-wider uppercase tabular-nums";
 
   const variantStyles: Record<BadgeVariant, string> = {
-    approved: "bg-[#052e16] text-[#4ade80] border-[#166534]",
-    calibrated: "bg-[#052e16] text-[#4ade80] border-[#166534]",
-    submitted: "bg-[#082f49] text-[#38bdf8] border-[#075985]",
-    pending: "bg-[#422006] text-[#facc15] border-[#854d0e]",
-    expiring: "bg-[#451a03] text-[#fb923c] border-[#9a3412]",
-    rejected: "bg-[#450a0a] text-[#f87171] border-[#991b1b]",
-    overdue: "bg-[#450a0a] text-[#f87171] border-[#991b1b]",
-    neutral: "bg-[#1e293b] text-[#94a3b8] border-[#334155]",
+    approved: "bg-emerald-50 text-emerald-700 border-emerald-300",
+    calibrated: "bg-emerald-50 text-emerald-700 border-emerald-300",
+    submitted: "bg-sky-50 text-sky-700 border-sky-300",
+    pending: "bg-amber-50 text-amber-700 border-amber-300",
+    expiring: "bg-orange-50 text-orange-700 border-orange-300",
+    rejected: "bg-red-50 text-red-700 border-red-300",
+    overdue: "bg-red-50 text-red-700 border-red-300",
+    neutral: "bg-slate-100 text-slate-700 border-slate-300",
   };
 
   return (
