@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Search, RefreshCw, Plus, CheckCircle2, Clock, XCircle, FileSpreadsheet } from "lucide-react";
+import { Search, RefreshCw, Plus, CheckCircle2, Clock, XCircle, FileSpreadsheet, Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -16,6 +16,7 @@ interface NFILogTableProps {
   isLoading: boolean;
   onRefresh: () => void;
   onAddNew?: () => void;
+  onOpenImport?: () => void;
 }
 
 export function NFILogTable({
@@ -24,6 +25,7 @@ export function NFILogTable({
   isLoading,
   onRefresh,
   onAddNew,
+  onOpenImport,
 }: NFILogTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDiscipline, setSelectedDiscipline] = useState<string>("ALL");
@@ -155,6 +157,63 @@ export function NFILogTable({
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              if (filteredEntries.length === 0) return;
+              const headers = [
+                "No",
+                "No NFI",
+                "Subject / Description",
+                "Discipline",
+                "Area / Location",
+                "Inspection Date",
+                "Result",
+                "Status",
+                "PIC AEI",
+                "Remark",
+              ];
+              const rows = filteredEntries.map((e, idx) => [
+                idx + 1,
+                `"${e.noNfi}"`,
+                `"${(e.subjectDescription || "").replace(/"/g, '""')}"`,
+                `"${e.discipline}"`,
+                `"${(e.area || "").replace(/"/g, '""')}"`,
+                `"${e.inspectionDate}"`,
+                `"${e.result}"`,
+                `"${e.status}"`,
+                `"${e.picAei}"`,
+                `"${(e.remark || "").replace(/"/g, '""')}"`,
+              ]);
+              const csvContent =
+                "data:text/csv;charset=utf-8," +
+                [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+              const encodedUri = encodeURI(csvContent);
+              const link = document.createElement("a");
+              link.setAttribute("href", encodedUri);
+              link.setAttribute("download", `NFI_Log_${new Date().toISOString().slice(0, 10)}.csv`);
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
+            icon={<Download className="w-4 h-4" strokeWidth={1.8} />}
+          >
+            Ekspor CSV
+          </Button>
+
+          {onOpenImport && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onOpenImport}
+              icon={<Upload className="w-4 h-4" strokeWidth={1.8} />}
+              className="text-[#38bdf8] border-[#38bdf8]/30 hover:bg-[#38bdf8]/10"
+            >
+              Impor Batch
+            </Button>
+          )}
+
           <Button
             variant="secondary"
             size="sm"

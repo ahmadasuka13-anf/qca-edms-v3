@@ -34,6 +34,23 @@ export const nfiService = {
   },
 
   /**
+   * Batch import NFI entries
+   */
+  async importBatch(projectCode: string, rows: Record<string, unknown>[]): Promise<{ success: boolean; message: string; importedCount?: number }> {
+    const token = getStoredSessionToken();
+    try {
+      const res = await callGasApi<{ count?: number }>("importNFILogFromData", [token, projectCode, rows]);
+      return {
+        success: res.success !== false,
+        message: res.message || (res.success !== false ? `Berhasil mengimpor ${rows.length} data NFI.` : "Gagal mengimpor NFI."),
+        importedCount: rows.length,
+      };
+    } catch (e) {
+      return { success: false, message: (e as Error).message };
+    }
+  },
+
+  /**
    * Calculate summary KPI
    */
   calculateSummary(items: NFIEntry[]): NFISummary {

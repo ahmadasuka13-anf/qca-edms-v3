@@ -51,6 +51,12 @@ import { ArchiveRecycleBinView } from "@/features/archive/components/ArchiveRecy
 import { AIAssistantModal } from "@/features/ai-assistant/components/AIAssistantModal";
 import { QRScannerModal } from "@/features/qr-scanner/components/QRScannerModal";
 
+// Advanced Features (Document Previewer, Revision History, Batch Import, Numbering & Approval Settings)
+import { DocumentPreviewModal } from "@/features/documents/components/DocumentPreviewModal";
+import { RevisionHistoryModal } from "@/features/documents/components/RevisionHistoryModal";
+import { NFIImportModal } from "@/features/nfi/components/NFIImportModal";
+import { NumberingAndApprovalSettingsView } from "@/features/settings/components/NumberingAndApprovalSettingsView";
+
 // UI Components
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Database, Server } from "lucide-react";
@@ -110,6 +116,9 @@ export default function HomePage() {
   const [selectedProject, setSelectedProject] = useState<string>("");
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<DocumentItem | null>(null);
+  const [historyDoc, setHistoryDoc] = useState<DocumentItem | null>(null);
+  const [isNfiImportOpen, setIsNfiImportOpen] = useState(false);
 
   // Filtered documents by project
   const filteredDocuments = selectedProject
@@ -444,6 +453,8 @@ export default function HomePage() {
                 onRefresh={loadDocuments}
                 onAddNew={() => setActiveTab("upload")}
                 onViewDetail={(doc) => setSelectedDocForDetail(doc)}
+                onPreviewDoc={(doc) => setPreviewDoc(doc)}
+                onHistoryDoc={(doc) => setHistoryDoc(doc)}
                 onApprove={handleApproveDoc}
                 onReject={handleRejectDoc}
               />
@@ -558,6 +569,7 @@ export default function HomePage() {
                 isLoading={isNfiLoading}
                 onRefresh={loadNfi}
                 onAddNew={() => setIsNfiModalOpen(true)}
+                onOpenImport={() => setIsNfiImportOpen(true)}
               />
             </div>
           )}
@@ -661,14 +673,20 @@ export default function HomePage() {
             <div className="space-y-6">
               <div className="border-b border-[#1e293b] pb-4">
                 <h1 className="text-lg font-bold tracking-wide text-slate-100 uppercase">
-                  Konfigurasi Sistem & Arsitektur
+                  Konfigurasi Sistem, Penomoran & Approval
                 </h1>
                 <p className="text-xs text-slate-400 font-mono mt-0.5">
-                  Status konektivitas Next.js 16 + TypeScript + Google Apps Script Backend
+                  Aturan format nomor dokumen otomatis, matriks approver QA/QC & status arsitektur
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Numbering Rules & Approval Matrix Subsystem */}
+              <NumberingAndApprovalSettingsView
+                projects={projects.map((p) => ({ code: p.code, name: p.name }))}
+                showToast={showToast}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-[#1e293b]">
                 <Card className="p-5 border-[#1e293b]">
                   <div className="flex items-center gap-3 mb-3">
                     <Server className="w-5 h-5 text-[#38bdf8]" />
@@ -745,6 +763,36 @@ export default function HomePage() {
           setIsQRScannerOpen(false);
           setSelectedDocForDetail(doc);
         }}
+      />
+
+      {/* In-App Document Viewer & Preview Modal */}
+      <DocumentPreviewModal
+        document={previewDoc}
+        isOpen={!!previewDoc}
+        onClose={() => setPreviewDoc(null)}
+      />
+
+      {/* Revision History & Rollback Modal */}
+      <RevisionHistoryModal
+        document={historyDoc}
+        isOpen={!!historyDoc}
+        onClose={() => setHistoryDoc(null)}
+        onRollbackSuccess={() => {
+          showToast("Revisi dokumen berhasil dijadikan aktif.", "success");
+          loadDocuments();
+        }}
+      />
+
+      {/* Batch Import NFI Modal */}
+      <NFIImportModal
+        isOpen={isNfiImportOpen}
+        onClose={() => setIsNfiImportOpen(false)}
+        onSuccess={() => {
+          showToast("Data NFI berhasil diimpor.", "success");
+          loadNfi();
+        }}
+        projects={projects.map((p) => ({ code: p.code, name: p.name }))}
+        defaultProjectCode={selectedProject}
       />
     </div>
   );

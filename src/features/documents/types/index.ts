@@ -45,6 +45,11 @@ export interface DocumentItem {
   description?: string;
   referenceNumber?: string;
   timestamp: string;
+  approverName?: string;
+  approverEmail?: string;
+  approvalDate?: string;
+  comments?: string;
+  isLatestRevision?: boolean;
 }
 
 export interface DocumentFilter {

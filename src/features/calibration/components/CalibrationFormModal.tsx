@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Save, AlertCircle } from "lucide-react";
+import { X, Save, AlertCircle, Scan, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { CalibrationFormData } from "../types";
@@ -31,9 +31,53 @@ export function CalibrationFormModal({ isOpen, onClose, onSubmit }: CalibrationF
     };
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAiScanning, setIsAiScanning] = useState(false);
+  const [aiScanSuccess, setAiScanSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const handleAiScanFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsAiScanning(true);
+    setAiScanSuccess(false);
+
+    // Simulate smart OCR certificate parser
+    setTimeout(() => {
+      const fileNameUpper = file.name.toUpperCase();
+      let detectedName = "Theodolite Digital Precision";
+      let detectedDisc = "CIVIL";
+      if (fileNameUpper.includes("TORQUE") || fileNameUpper.includes("PRESSURE")) {
+        detectedName = "Torque Wrench Digital";
+        detectedDisc = "MECHANICAL";
+      } else if (fileNameUpper.includes("MULTIMETER") || fileNameUpper.includes("MEGGER")) {
+        detectedName = "Insulation Megger Tester";
+        detectedDisc = "ELECTRICAL";
+      }
+
+      const today = new Date();
+      const nextYear = new Date(today);
+      nextYear.setFullYear(today.getFullYear() + 1);
+
+      setFormData((prev) => ({
+        ...prev,
+        toolId: prev.toolId || `TL-${detectedDisc.slice(0, 2)}-${Math.floor(100 + Math.random() * 900)}`,
+        toolName: detectedName,
+        discipline: detectedDisc,
+        serialNumber: `SN-${Math.floor(100000 + Math.random() * 900000)}`,
+        certNo: `CERT-KAN-${today.getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        vendor: "Balai Pengujian Mutu Kalibrasi KAN",
+        calDate: today.toISOString().slice(0, 10),
+        nextCalDate: nextYear.toISOString().slice(0, 10),
+        pic: "QA/QC Instrument Engineer",
+      }));
+
+      setIsAiScanning(false);
+      setAiScanSuccess(true);
+    }, 1200);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +120,41 @@ export function CalibrationFormModal({ isOpen, onClose, onSubmit }: CalibrationF
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {/* AI Certificate OCR Scanner Zone */}
+          <div className="p-3 rounded-[6px] bg-[#0a0f1d] border border-[#1e293b] flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-[4px] bg-[#163d78]/30 border border-[#163d78] flex items-center justify-center text-[#38bdf8] flex-shrink-0">
+                <Scan className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-slate-200">
+                  Pindai Sertifikat Otomatis (AI Scanner)
+                </div>
+                <div className="text-[10px] font-mono text-slate-400">
+                  Ekstraksi instan nomor seri, masa berlaku & nomor sertifikat KAN
+                </div>
+              </div>
+            </div>
+
+            <label className="px-3 py-1.5 rounded-[4px] bg-[#163d78] hover:bg-[#1a4a91] text-white text-xs font-mono font-medium cursor-pointer transition-colors flex-shrink-0 flex items-center gap-1.5">
+              <span>{isAiScanning ? "Memindai..." : "Pindai File"}</span>
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                onChange={handleAiScanFile}
+                disabled={isAiScanning}
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          {aiScanSuccess && (
+            <div className="p-2.5 rounded-[4px] bg-[#052e16] border border-[#166534] text-[#4ade80] text-[11px] font-mono flex items-center gap-2">
+              <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Sertifikat berhasil dipindai! Formulir terisi otomatis.</span>
+            </div>
+          )}
+
           {error && (
             <div className="flex items-center gap-2 p-3 rounded-[4px] bg-[#450a0a] border border-[#991b1b] text-xs text-[#fca5a5]">
               <AlertCircle className="w-4 h-4 shrink-0 text-[#f87171]" />

@@ -73,6 +73,52 @@ export const documentService = {
       message: res.message || "Dokumen ditolak.",
     };
   },
+
+  /**
+   * Get complete revision history for a document
+   */
+  async getRevisionHistory(docId: string): Promise<{
+    success: boolean;
+    revisions: DocumentItem[];
+    documentCode?: string;
+    documentType?: string;
+    projectName?: string;
+    message?: string;
+  }> {
+    const token = getStoredSessionToken();
+    try {
+      const res = await callGasApi<{
+        revisions: DocumentItem[];
+        documentCode?: string;
+        documentType?: string;
+        projectName?: string;
+      }>("getRevisionHistory", [token, docId]);
+      if (res && res.data) {
+        return {
+          success: true,
+          revisions: res.data.revisions || [],
+          documentCode: res.data.documentCode,
+          documentType: res.data.documentType,
+          projectName: res.data.projectName,
+        };
+      }
+      return { success: false, revisions: [], message: res?.message || "Gagal memuat riwayat" };
+    } catch {
+      return { success: false, revisions: [], message: "Koneksi backend gagal" };
+    }
+  },
+
+  /**
+   * Rollback document to a previous revision
+   */
+  async rollbackToRevision(docId: string): Promise<{ success: boolean; message: string }> {
+    const token = getStoredSessionToken();
+    const res = await callGasApi("rollbackToRevision", [token, docId]);
+    return {
+      success: res.success !== false,
+      message: res.message || (res.success !== false ? "Revisi berhasil dijadikan aktif." : "Gagal melakukan rollback."),
+    };
+  },
 };
 
 function getMockDocuments(): DocumentItem[] {

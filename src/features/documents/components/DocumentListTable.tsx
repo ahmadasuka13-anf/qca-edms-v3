@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Search, ExternalLink, Check, X, RefreshCw, Plus, Eye, Download } from "lucide-react";
+import { Search, ExternalLink, Check, X, RefreshCw, Plus, Eye, Download, History, FileText } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -15,6 +15,8 @@ interface DocumentListTableProps {
   onRefresh: () => void;
   onAddNew?: () => void;
   onViewDetail?: (doc: DocumentItem) => void;
+  onPreviewDoc?: (doc: DocumentItem) => void;
+  onHistoryDoc?: (doc: DocumentItem) => void;
   onApprove?: (docId: string) => void;
   onReject?: (docId: string) => void;
 }
@@ -25,6 +27,8 @@ export function DocumentListTable({
   onRefresh,
   onAddNew,
   onViewDetail,
+  onPreviewDoc,
+  onHistoryDoc,
   onApprove,
   onReject,
 }: DocumentListTableProps) {
@@ -225,9 +229,20 @@ export function DocumentListTable({
                   <div className="font-mono font-semibold text-[#38bdf8] text-xs">
                     {doc.documentCode || doc.documentNumber}
                   </div>
-                  <div className="font-mono text-[11px] text-slate-400 mt-0.5">
-                    Rev {doc.revision ?? 0}
-                  </div>
+                  {onHistoryDoc ? (
+                    <button
+                      onClick={() => onHistoryDoc(doc)}
+                      className="font-mono text-[11px] text-slate-400 hover:text-[#38bdf8] transition-colors mt-0.5 flex items-center gap-1 group"
+                      title="Lihat Riwayat & Rollback Revisi"
+                    >
+                      <History className="w-3 h-3 text-slate-500 group-hover:text-[#38bdf8]" />
+                      <span>Rev {doc.revision ?? 0}</span>
+                    </button>
+                  ) : (
+                    <div className="font-mono text-[11px] text-slate-400 mt-0.5">
+                      Rev {doc.revision ?? 0}
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="font-medium text-slate-100 text-xs">{doc.title}</div>
@@ -250,6 +265,15 @@ export function DocumentListTable({
                 </TableCell>
                 <TableCell className="text-center">
                   <div className="flex items-center justify-center gap-1">
+                    {onPreviewDoc && doc.fileUrl && (
+                      <button
+                        onClick={() => onPreviewDoc(doc)}
+                        className="p-1.5 rounded-[4px] bg-[#163d78]/30 hover:bg-[#163d78]/70 text-[#38bdf8] border border-[#163d78] transition-colors"
+                        title="Pratinjau Dokumen (In-App)"
+                      >
+                        <FileText className="w-3.5 h-3.5" strokeWidth={1.8} />
+                      </button>
+                    )}
                     {onViewDetail && (
                       <button
                         onClick={() => onViewDetail(doc)}

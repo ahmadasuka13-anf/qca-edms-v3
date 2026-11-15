@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Search, RefreshCw, Plus, QrCode, FileText, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { Search, RefreshCw, Plus, QrCode, FileText, CheckCircle2, Clock, AlertTriangle, Download } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -145,6 +145,51 @@ export function CalibrationTable({
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              if (filteredTools.length === 0) return;
+              const headers = [
+                "No",
+                "Tool ID",
+                "Nama Alat Ukur",
+                "Disiplin",
+                "No Seri",
+                "Tgl Kalibrasi",
+                "Kalibrasi Ulang",
+                "Status",
+                "No Sertifikat",
+                "Vendor",
+              ];
+              const rows = filteredTools.map((t, idx) => [
+                idx + 1,
+                `"${t.id}"`,
+                `"${(t.name || "").replace(/"/g, '""')}"`,
+                `"${t.discipline}"`,
+                `"${t.serialNumber || ""}"`,
+                `"${t.lastCalDate}"`,
+                `"${t.nextCalDate}"`,
+                `"${t.status}"`,
+                `"${(t.certificateNo || "").replace(/"/g, '""')}"`,
+                `"${(t.vendor || "").replace(/"/g, '""')}"`,
+              ]);
+              const csvContent =
+                "data:text/csv;charset=utf-8," +
+                [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+              const encodedUri = encodeURI(csvContent);
+              const link = document.createElement("a");
+              link.setAttribute("href", encodedUri);
+              link.setAttribute("download", `Data_Kalibrasi_${new Date().toISOString().slice(0, 10)}.csv`);
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
+            icon={<Download className="w-4 h-4" strokeWidth={1.8} />}
+          >
+            Ekspor CSV
+          </Button>
+
           {onScanLabel && (
             <Button
               variant="secondary"
